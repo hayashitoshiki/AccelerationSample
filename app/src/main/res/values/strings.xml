@@ -1,3 +1,9 @@
 <resources>
     <string name="app_name">AccelerationSample</string>
+
+    <!-- タブ -->
+    <string name="tab_home">Home</string>
+    <string name="tab_center">Center</string>
+    <string name="tab_setting">Setting</string>
+
 </resources>
