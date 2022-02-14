@@ -12,6 +12,6 @@ fun HomeScreen(viewModel: AndroidStateViewModel) {
         Text(text = "x = " + viewModel.x.value)
         Text(text = "y = " + viewModel.y.value)
         Text(text = "Z = " + viewModel.z.value)
-        Text(text = "傾き = " + viewModel.tilt.value)
+        Text(text = "傾き = " + viewModel.rotate.value.label)
     }
 }

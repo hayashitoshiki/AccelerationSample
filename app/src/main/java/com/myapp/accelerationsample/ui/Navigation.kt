@@ -12,6 +12,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import com.myapp.accelerationsample.R
 import com.myapp.accelerationsample.ui.screen.HomeScreen
+import com.myapp.accelerationsample.ui.screen.RightTopScreen
 import com.myapp.accelerationsample.ui.viewmodel.AndroidStateViewModel
 
 enum class Screens(
@@ -87,7 +88,7 @@ fun AppNavHost(
         }
         composable(route = Screens.SettingScreen.route) {
             androidStateViewModel.setScreen(Screens.SettingScreen)
-            HomeScreen(androidStateViewModel)
+            RightTopScreen(androidStateViewModel)
         }
     }
 }

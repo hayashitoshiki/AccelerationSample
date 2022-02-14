@@ -11,7 +11,10 @@ import android.content.Context
 import android.hardware.Sensor
 import android.util.Log
 import android.widget.Toast
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.padding
 import androidx.compose.material.Scaffold
+import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.navigation.compose.rememberNavController
 import com.myapp.accelerationsample.ui.AppNavHost
@@ -30,10 +33,13 @@ class MainActivity : ComponentActivity() , SensorEventListener {
         super.onCreate(savedInstanceState)
         viewModel.screen.observe(this) {
             // 特定の画面のみ加速度センサーを起動
-            if (it == Screens.SecondScreen) {
-                startAccelerometer()
-            } else {
-                stopAccelerometer()
+            when(it) {
+                Screens.SettingScreen, Screens.SecondScreen -> {
+                    startAccelerometer()
+                }
+                else -> {
+                    stopAccelerometer()
+                }
             }
         }
 
@@ -44,10 +50,12 @@ class MainActivity : ComponentActivity() , SensorEventListener {
                     bottomBar = { BottomBar(navController) },
                     backgroundColor = Color(0xfff5f5f5)
                 ) {
-                    AppNavHost(
-                        navController = navController,
-                        androidStateViewModel = viewModel
-                    )
+                    Box(modifier = Modifier.padding(it)) {
+                        AppNavHost(
+                            navController = navController,
+                            androidStateViewModel = viewModel
+                        )
+                    }
                 }
             }
         }
@@ -55,8 +63,10 @@ class MainActivity : ComponentActivity() , SensorEventListener {
 
     override fun onResume() {
         super.onResume()
-        if (viewModel.screen.value == Screens.SecondScreen) {
-            startAccelerometer()
+        when(viewModel.screen.value) {
+            Screens.SettingScreen, Screens.SecondScreen -> {
+                startAccelerometer()
+            }
         }
     }
 
