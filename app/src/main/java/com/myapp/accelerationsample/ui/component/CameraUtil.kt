@@ -3,6 +3,9 @@ package com.myapp.accelerationsample.ui.component
 import android.annotation.SuppressLint
 import android.content.Context
 import android.content.Intent
+import android.graphics.Bitmap
+import android.graphics.BitmapFactory
+import android.graphics.Matrix
 import android.media.MediaActionSound
 import android.net.Uri
 import android.provider.Settings
@@ -33,7 +36,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.core.content.ContextCompat
+import androidx.exifinterface.media.ExifInterface
 import com.myapp.accelerationsample.model.value.Rotate
+import java.io.BufferedInputStream
+import java.io.ByteArrayOutputStream
 import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
@@ -295,9 +301,9 @@ private fun ImageCapture.takePicture(
             override fun onImageSaved(output: ImageCapture.OutputFileResults) {
                 val savedUri = output.savedUri ?: Uri.fromFile(photoFile)
                 sound.play(MediaActionSound.SHUTTER_CLICK)
+                fixPicture(context, savedUri, rotate)
                 Log.d("画像保存成功", "saveUri = " + savedUri)
                 onImageCaptured(savedUri)
-
             }
             // 失敗
             override fun onError(exception: ImageCaptureException) {
@@ -305,6 +311,54 @@ private fun ImageCapture.takePicture(
                 onError(exception)
             }
         })
+}
+
+/**
+ * 撮影した写真をExifと端末の回転を考慮して、
+ * 写真が撮影した時の向きになるように保存
+ *
+ * @param context Context
+ * @param savedUri 修正する画像のURI
+ * @param rotate 端末の傾き
+ */
+private fun fixPicture(context: Context, savedUri: Uri, rotate: Rotate) {
+
+    val prefix = "file://"
+    val folder = context.filesDir.toString()
+    val filePath = "$prefix$folder/"
+    val file = if (Regex(filePath).containsMatchIn(savedUri.toString())) {
+        savedUri.toString().removePrefix(filePath)
+    } else {
+        savedUri.toString()
+    }
+    try {
+        val exifInterface = ExifInterface(savedUri.path!!)
+        // 回転設定
+        val angle = when(exifInterface.getAttributeInt(
+            ExifInterface.TAG_ORIENTATION,
+            ExifInterface.ORIENTATION_UNDEFINED
+        )) {
+            ExifInterface.ORIENTATION_ROTATE_90 -> 90
+            ExifInterface.ORIENTATION_ROTATE_180 -> 180
+            ExifInterface.ORIENTATION_ROTATE_270 -> 270
+            else -> 0
+        } + rotate.angle
+        // 画像修正
+        BufferedInputStream(context.openFileInput(file)).use { bufferedInputStream ->
+            val bitmap1 = BitmapFactory.decodeStream(bufferedInputStream)
+            val imageWidth = bitmap1.width
+            val imageHeight = bitmap1.height
+            val matrix = Matrix()
+            matrix.setRotate(angle, (imageWidth / 2).toFloat(), (imageHeight / 2).toFloat())
+            val bitmap2 = Bitmap.createBitmap(bitmap1, 0, 0, imageWidth, imageHeight, matrix, true)
+            val outputStream = ByteArrayOutputStream()
+            bitmap2.compress(Bitmap.CompressFormat.JPEG, 100, outputStream)
+            val byteArray = outputStream.toByteArray()
+            File(savedUri.path!!).writeBytes(byteArray)
+        }
+    } catch (exception: Exception) {
+        throw exception
+    }
 }
 
 /**
